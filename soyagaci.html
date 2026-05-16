@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Anıt & Soy Ağacı</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&display=family" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f4f3ef;
+            --card-bg: #ffffff;
+            --primary-text: #2c3e50;
+            --secondary-text: #7f8c8d;
+            --accent-color: #8e7f63; /* Asil bir gold/bronz tonu */
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px 15px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 30px 20px;
+            border: 1px solid rgba(142, 127, 99, 0.2);
+        }
+
+        /* Başlık ve Rahmetli Bilgisi */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 35px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 25px;
+        }
+
+        .profile-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 26px;
+            color: var(--primary-text);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .dates {
+            font-size: 14px;
+            color: var(--accent-color);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .epitaph {
+            font-style: italic;
+            color: var(--secondary-text);
+            font-size: 14px;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+
+        /* Soy Ağacı Bölümü */
+        .tree-section {
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 16px;
+            text-align: center;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 40px;
+            height: 1px;
+            background: var(--accent-color);
+            margin: 8px auto 0;
+        }
+
+        /* Kuşak Blokları */
+        .generation-block {
+            margin-bottom: 30px;
+        }
+
+        .generation-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--secondary-text);
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Kart Düzenleri */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .flex-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .person-card {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .person-card:hover {
+            border-color: var(--accent-color);
+            background: #fffdf9;
+        }
+
+        .role {
+            font-size: 11px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary-text);
+        }
+
+        .lifespan {
+            font-size: 11px;
+            color: var(--secondary-text);
+            margin-top: 2px;
+        }
+
+        /* Alt Bilgi */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 11px;
+            color: var(--secondary-text);
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- Vefat Eden Kişi Başlığı -->
+    <div class="profile-header">
+        <h1>Ahmet Yılmaz</h1>
+        <div class="dates">15.03.1945 — 22.10.2023</div>
+        <p class="epitaph">"Ruhun şad, mekânın cennet olsun. Seni asla unutmayacağız."</p>
+    </div>
+
+    <!-- Soy Ağacı Alanı -->
+    <div class="tree-section">
+        <h2 class="section-title">Soy Ağacı</h2>
+
+        <!-- 1. ÜST KUŞAK (Büyük Anne ve Büyük Babalar) -->
+        <div class="generation-block">
+            <div class="generation-label">Büyük Ebeveynler</div>
+            <div class="grid-2">
+                <div class="person-card">
+                    <div class="role">Anneannesi</div>
+                    <div class="name">Ayşe Yurt</div>
+                    <div class="lifespan">1902 — 1985</div>
+                </div>
+                <div class="person-card">
+                    <div class="role">Babası'nın Babası</div>
+                    <div class="name">Mehmet Yılmaz</div>
+                    <div class="lifespan">1898 — 1974</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ÜST KUŞAK (Anne ve Baba) -->
+        <div class="generation-block">
+            <div class="generation-label">Ebeveynleri</div>
+            <div class="grid-2">
+                <div class="person-card">
+                    <div class="role">Annesi</div>
+                    <div class="name">Fatma Yılmaz</div>
+                    <div class="lifespan">1923 — 2001</div>
+                </div>
+                <div class="person-card">
+                    <div class="role">Babası</div>
+                    <div class="name">Ali Yılmaz</div>
+                    <div class="lifespan">1918 — 1995</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AYNI KUŞAK (Kardeşler) -->
+        <div class="generation-block">
+            <div class="generation-label">Kardeşleri</div>
+            <div class="flex-list">
+                <div class="person-card">
+                    <div class="role">Kız Kardeşi</div>
+                    <div class="name">Emine (Yılmaz) Kaya</div>
+                    <div class="lifespan">1948 — Aktif</div>
+                </div>
+                <div class="person-card">
+                    <div class="role">Erkek Kardeşi</div>
+                    <div class="name">Mustafa Yılmaz</div>
+                    <div class="lifespan">1952 — 2018</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        RUHUNA EL-FATİHA
+    </div>
+</div>
+
+</body>
+</html>
