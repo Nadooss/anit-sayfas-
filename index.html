@@ -3,242 +3,677 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Anıt & Soy Ağacı</title>
+    <title>Mezar Anıt Sistemi</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&display=family" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
     <style>
         :root {
             --bg-color: #f4f3ef;
             --card-bg: #ffffff;
             --primary-text: #2c3e50;
             --secondary-text: #7f8c8d;
-            --accent-color: #8e7f63; /* Asil bir gold/bronz tonu */
+            --accent-color: #8e7f63;
             --border-color: #e2e8f0;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--primary-text); padding-top: 60px; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--primary-text);
-            line-height: 1.6;
-            padding: 20px 15px;
-        }
+        .navbar { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--card-bg); display: flex; align-items: center; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 100; justify-content: space-between; }
+        .nav-title { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; color: var(--accent-color); letter-spacing: 1px; }
+        .menu-btn { font-size: 24px; cursor: pointer; background: none; border: none; color: var(--primary-text); }
 
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            padding: 30px 20px;
-            border: 1px solid rgba(142, 127, 99, 0.2);
-        }
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--primary-text); z-index: 200; transition: 0.3s; padding: 40px 20px; box-shadow: 5px 0 15px rgba(0,0,0,0.1); }
+        .sidebar.active { left: 0; }
+        .sidebar-close { position: absolute; top: 15px; right: 20px; color: #fff; font-size: 24px; cursor: pointer; background: none; border: none; }
+        .sidebar-menu { list-style: none; margin-top: 30px; }
+        .sidebar-menu li { padding: 15px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #f4f3ef; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .sidebar-menu li:hover { color: var(--accent-color); padding-left: 15px; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 150; display: none; }
+        .sidebar-overlay.active { display: block; }
 
-        /* Başlık ve Rahmetli Bilgisi */
-        .profile-header {
-            text-align: center;
-            margin-bottom: 35px;
-            border-bottom: 2px solid var(--bg-color);
-            padding-bottom: 25px;
-        }
+        .view-section { display: none; max-width: 600px; margin: 20px auto; padding: 0 15px; }
+        .view-section.active { display: block; }
 
-        .profile-header h1 {
-            font-family: 'Cinzel', serif;
-            font-size: 26px;
-            color: var(--primary-text);
-            margin-bottom: 5px;
-            letter-spacing: 1px;
-        }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 25px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid var(--border-color); }
+        .section-title { font-family: 'Cinzel', serif; text-align: center; margin-bottom: 20px; color: var(--accent-color); font-size: 18px; }
+        
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 14px; background: #fafafa; }
+        input:focus, textarea:focus { outline: none; border-color: var(--accent-color); background: #fff; }
+        
+        /* ÖZEL DOSYA YÜKLEME ALANI */
+        .file-upload-wrapper { position: relative; margin-bottom: 15px; }
+        .file-upload-label { display: block; background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 15px; text-align: center; font-size: 13px; color: #64748b; font-weight: 500; cursor: pointer; transition: 0.2s; }
+        .file-upload-label:hover { border-color: var(--accent-color); background: #f8fafc; color: var(--primary-text); }
+        .file-upload-wrapper input[type="file"] { display: none; }
+        .file-preview-info { font-size: 12px; color: #2ecc71; margin-top: -8px; margin-bottom: 12px; display: none; font-weight: 500; }
 
-        .dates {
-            font-size: 14px;
-            color: var(--accent-color);
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
+        button.btn-primary { width: 100%; background: var(--accent-color); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        button.btn-primary:hover { background: #76684f; }
+        
+        .deceased-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+        .deceased-item:hover { border-color: var(--accent-color); background: #fffdf9; transform: translateY(-2px); }
+        .deceased-name { font-weight: 600; font-size: 15px; color: var(--primary-text); }
+        .deceased-date { font-size: 12px; color: var(--secondary-text); margin-top: 2px; }
 
-        .epitaph {
-            font-style: italic;
-            color: var(--secondary-text);
-            font-size: 14px;
-            max-width: 80%;
-            margin: 0 auto;
-        }
+        /* PROFİL ÜST ALANI TASARIMI */
+        .profile-header-flex { display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; margin-bottom: 25px; }
+        .profile-avatar-container { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid var(--border-color); background: #e2e8f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .profile-avatar-container img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-info-container { flex-grow: 1; text-align: left; }
+        .profile-info-container h1 { font-family: 'Cinzel', serif; font-size: 22px; color: var(--primary-text); line-height: 1.2; }
+        .profile-bio-box { background: #fafafa; border-left: 3px solid var(--accent-color); padding: 12px; margin-top: 15px; border-radius: 0 8px 8px 0; font-size: 13px; line-height: 1.6; color: var(--primary-text); }
+        .profile-bio-title { font-weight: 600; font-size: 11px; text-transform: uppercase; color: var(--accent-color); margin-bottom: 4px; letter-spacing: 0.5px; }
 
-        /* Soy Ağacı Bölümü */
-        .tree-section {
-            margin-top: 20px;
-        }
+        .dates { font-size: 14px; color: var(--accent-color); font-weight: 600; margin: 5px 0 0 0; }
+        .prayer-box { text-align: center; background: #fafafa; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid var(--border-color); }
+        .prayer-btn { background: var(--accent-color); color: white; border: none; padding: 10px 22px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 13px; margin-top: 8px; box-shadow: 0 4px 10px rgba(142,127,99,0.2); }
+        .prayer-btn:disabled { background: #cbd5e1; color: #64748b; cursor: not-allowed; box-shadow: none; }
 
-        .section-title {
-            font-family: 'Cinzel', serif;
-            font-size: 16px;
-            text-align: center;
-            color: var(--accent-color);
-            margin-bottom: 25px;
-            position: relative;
-        }
+        .gen-label { font-size: 11px; text-transform: uppercase; color: var(--secondary-text); font-weight: 600; margin: 20px 0 8px 0; text-align: center; letter-spacing: 1px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .p-card { background: #fafafa; border: 1px solid var(--border-color); padding: 12px; text-align: center; border-radius: 8px; font-size: 13px; }
+        .p-role { font-size: 10px; color: var(--accent-color); font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
 
-        .section-title::after {
-            content: '';
-            display: block;
-            width: 40px;
-            height: 1px;
-            background: var(--accent-color);
-            margin: 8px auto 0;
-        }
+        .comment-item { background: #fdfdfd; border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+        .comment-author { font-weight: 600; color: var(--accent-color); font-size: 12px; margin-bottom: 3px; }
 
-        /* Kuşak Blokları */
-        .generation-block {
-            margin-bottom: 30px;
-        }
+        .admin-badge { background: #e74c3c; color: white; padding: 10px; text-align: center; font-weight: 600; margin-bottom: 20px; font-size: 13px; border-radius: 6px; }
+        .admin-actions { display: flex; gap: 10px; margin-top: 12px; }
+        .btn-approve { background: #2ecc71; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; flex: 1; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+        
+        .admin-sub-comment { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 6px; margin-top: 6px; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
 
-        .generation-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--secondary-text);
-            margin-bottom: 12px;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        /* Kart Düzenleri */
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .flex-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .person-card {
-            background: #fafafa;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .person-card:hover {
-            border-color: var(--accent-color);
-            background: #fffdf9;
-        }
-
-        .role {
-            font-size: 11px;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .name {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--primary-text);
-        }
-
-        .lifespan {
-            font-size: 11px;
-            color: var(--secondary-text);
-            margin-top: 2px;
-        }
-
-        /* Alt Bilgi */
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 11px;
-            color: var(--secondary-text);
-            letter-spacing: 1px;
-        }
+        /* YASAL KARŞILAMA EKRANI (POPUP) STİLLERİ */
+        .welcome-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111111; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .welcome-box { background: #1a1a1a; border: 1px solid #333; border-radius: 16px; max-width: 550px; width: 100%; padding: 35px 30px; color: #e0e0e0; box-shadow: 0 10px 30px rgba(0,0,0,0.7); text-align: center; }
+        .legal-text { font-size: 12px; color: #888; text-align: justify; background: #222; padding: 15px; border-radius: 8px; border: 1px solid #2c2c2c; height: 130px; overflow-y: auto; margin-bottom: 20px; line-height: 1.5; }
+        .legal-checkbox-container { display: flex; align-items: flex-start; gap: 10px; text-align: left; font-size: 12px; color: #ccc; margin-bottom: 25px; cursor: pointer; }
+        .legal-checkbox-container input { width: auto; margin: 3px 0 0 0; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    
-    <!-- Vefat Eden Kişi Başlığı -->
-    <div class="profile-header">
-        <h1>Ahmet Yılmaz</h1>
-        <div class="dates">15.03.1945 — 22.10.2023</div>
-        <p class="epitaph">"Ruhun şad, mekânın cennet olsun. Seni asla unutmayacağız."</p>
+    <div id="welcomeOverlay" class="welcome-overlay">
+        <div class="welcome-box">
+            <div style="font-family:'Cinzel', serif; font-size: 12px; letter-spacing: 3px; color:#888; margin-bottom: 25px;">MEMENTO MORI</div>
+            
+            <div class="legal-text">
+                <strong>YASAL UYARI VE KULLANIM ŞARTLARI:</strong><br>
+                Bu platform, vefat eden bireylerin aziz hatıralarını yaşatmak ve aile bağlarını kayıt altına almak amacıyla kurulmuş bir dijital anıt sistemidir. Sistem dâhilinde "Cenaze Kaydı" oluşturan veya mevta profillerine "Taziye Mesajı / Yorum" bırakan tüm kullanıcılar, paylaştıkları bilgilerin doğruluğundan yasal olarak bizzat sorumludur. Gerçeğe aykırı, asılsız, karalayıcı, hakaret içerikli ya da üçüncü şahısların kişilik haklarını ihlal eden beyanların hukuki ve cezai yaptırımları tamamen işlemi gerçekleştiren kişiye aittir. Sistem yöneticileri içeriği denetleme hakkını saklı tutmakla birlikte, doğabilecek hukuki uyuşmazlıklarda hiçbir sorumluluk kabul etmez. Veritabanına işlenen veriler resmi kayıt niteliği taşımamaktadır.
+            </div>
+
+            <label class="legal-checkbox-container">
+                <input type="checkbox" id="legalCheck" onchange="toggleEnterButton()">
+                <span>Yukarıdaki yasal uyarı metnini okudum, paylaştığım tüm verilerin yasal sorumluluğunu üstlendiğimi kesin olarak kabul ediyorum.</span>
+            </label>
+
+            <button id="enterSystemBtn" class="btn-primary" style="background:#8e7f63; border-color:#8e7f63; opacity: 0.4;" disabled onclick="acceptTerms()">Sisteme Giriş Yap</button>
+        </div>
     </div>
 
-    <!-- Soy Ağacı Alanı -->
-    <div class="tree-section">
-        <h2 class="section-title">Soy Ağacı</h2>
+    <nav class="navbar">
+        <button class="menu-btn" onclick="toggleMenu(true)">☰</button>
+        <div class="nav-title">MEZAR ANIT SİSTEMİ</div>
+        <div style="width:24px;"></div>
+    </nav>
 
-        <!-- 1. ÜST KUŞAK (Büyük Anne ve Büyük Babalar) -->
-        <div class="generation-block">
-            <div class="generation-label">Büyük Ebeveynler</div>
+    <div class="sidebar-overlay" id="overlay" onclick="toggleMenu(false)"></div>
+
+    <div class="sidebar" id="sidebar">
+        <button class="sidebar-close" onclick="toggleMenu(false)">✕</button>
+        <ul class="sidebar-menu">
+            <li onclick="navigate('home')">🕊️ Son Vefat Edenler</li>
+            <li onclick="navigate('search')">🔍 Cenaze Ara</li>
+            <li onclick="navigate('submit')">✍️ Cenazem Var (Başvuru)</li>
+            <li onclick="navigate('admin')">🔐 Yönetici Paneli</li>
+        </ul>
+    </div>
+
+    <section id="view-home" class="view-section active">
+        <h2 class="section-title">Son Vefat Edenler</h2>
+        <div id="homeList"></div>
+    </section>
+
+    <section id="view-search" class="view-section">
+        <h2 class="section-title">Cenaze Arama</h2>
+        <input type="text" id="searchInput" oninput="aramaYap()" placeholder="İsim veya soyisim yazın...">
+        <div id="searchResultList"></div>
+    </section>
+
+    <section id="view-submit" class="view-section">
+        <div class="card">
+            <h2 class="section-title">Cenaze Kayıt Başvurusu</h2>
+            <form id="submissionForm">
+                <input type="text" id="f-name" placeholder="Mevta Adı Soyadı" required>
+                <input type="text" id="f-dates" placeholder="Doğum - Ölüm Yılı (Örn: 1945 - 2026)" required>
+                
+                <div class="file-upload-wrapper">
+                    <label for="f-photo-file" class="file-upload-label">
+                        📸 Cihazdan Fotoğraf Seç (İsteğe Bağlı)
+                    </label>
+                    <input type="file" id="f-photo-file" accept="image/*" onchange="previewAndProcessImage(this)">
+                </div>
+                <div id="filePreviewInfo" class="file-preview-info">✓ Fotoğraf başarıyla hazırlandı.</div>
+
+                <textarea id="f-epitaph" placeholder="Anıt Sözü / Mezar Taşı Yazısı" rows="2"></textarea>
+                <textarea id="f-bio" placeholder="Nasıl bir insandı? (Karakteri, hayat hikayesi, bıraktığı izler...)" rows="4"></textarea>
+                
+                <div style="font-weight:600; font-size:11px; margin: 10px 0; color:var(--accent-color); text-transform:uppercase; letter-spacing:1px;">Soy Ağacı Bilgileri</div>
+                <input type="text" id="f-baba" placeholder="Babası">
+                <input type="text" id="f-anne" placeholder="Annesi">
+                <input type="text" id="f-dede" placeholder="Dedesi (Baba Tarafı)">
+                <input type="text" id="f-babaanne" placeholder="Babaannesi">
+                <input type="text" id="f-buyukbaba" placeholder="Büyükbabası (Anne Tarafı)">
+                <input type="text" id="f-anneanne" placeholder="Anneannesinin Adı">
+                <input type="text" id="f-erkekKardes" placeholder="Erkek Kardeşleri">
+                <input type="text" id="f-kizKardes" placeholder="Kız Kardeşleri">
+                
+                <button type="submit" class="btn-primary">Başvuruyu Gönder</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="view-profile" class="view-section">
+        <div class="card">
+            
+            <div class="profile-header-flex">
+                <div class="profile-avatar-container">
+                    <img id="p-photo" src="" alt="Mevta Fotoğrafı">
+                </div>
+                <div class="profile-info-container">
+                    <h1 id="p-name">-</h1>
+                    <div class="dates" id="p-dates">-</div>
+                    <p style="font-style:italic; font-size:13px; color:var(--secondary-text); margin-top:5px;" id="p-epitaph">-</p>
+                </div>
+            </div>
+
+            <div id="p-bioBox" class="profile-bio-box">
+                <div class="profile-bio-title">Nasıl Bir İnsandı?</div>
+                <div id="p-bio">-</div>
+            </div>
+            
+            <div class="prayer-box" style="margin-top:25px;">
+                <div style="font-size:26px; font-weight:700; color:var(--accent-color); font-family:'Cinzel'" id="p-prayerCount">0</div>
+                <div style="font-size:12px; color:var(--secondary-text); margin-bottom:5px;">Yasin / Dua Okundu</div>
+                <button class="prayer-btn" id="p-prayerBtn" onclick="duaEt()">🌸 Bir Dua Okudum</button>
+            </div>
+
+            <h3 class="section-title" style="font-size:14px; margin-top:30px;">Soy Ağacı & Aile Bağları</h3>
+            <div class="gen-label">Büyük Ebeveynler</div>
             <div class="grid-2">
-                <div class="person-card">
-                    <div class="role">Anneannesi</div>
-                    <div class="name">Ayşe Yurt</div>
-                    <div class="lifespan">1902 — 1985</div>
-                </div>
-                <div class="person-card">
-                    <div class="role">Babası'nın Babası</div>
-                    <div class="name">Mehmet Yılmaz</div>
-                    <div class="lifespan">1898 — 1974</div>
-                </div>
+                <div class="p-card"><div class="p-role">Dede (Baba Tarafı)</div><div id="p-dede">-</div></div>
+                <div class="p-card"><div class="p-role">Babaanne</div><div id="p-babaanne">-</div></div>
+                <div class="p-card"><div class="p-role">Büyükbaba (Anne Tarafı)</div><div id="p-buyukbaba">-</div></div>
+                <div class="p-card"><div class="p-role">Anneanne</div><div id="p-anneanne">-</div></div>
             </div>
-        </div>
-
-        <!-- 2. ÜST KUŞAK (Anne ve Baba) -->
-        <div class="generation-block">
-            <div class="generation-label">Ebeveynleri</div>
+            <div class="gen-label">Ebeveynleri</div>
             <div class="grid-2">
-                <div class="person-card">
-                    <div class="role">Annesi</div>
-                    <div class="name">Fatma Yılmaz</div>
-                    <div class="lifespan">1923 — 2001</div>
-                </div>
-                <div class="person-card">
-                    <div class="role">Babası</div>
-                    <div class="name">Ali Yılmaz</div>
-                    <div class="lifespan">1918 — 1995</div>
-                </div>
+                <div class="p-card"><div class="p-role">Babası</div><div id="p-baba">-</div></div>
+                <div class="p-card"><div class="p-role">Annesi</div><div id="p-anne">-</div></div>
+            </div>
+            <div class="gen-label">Kardeşleri</div>
+            <div class="grid-2">
+                <div class="p-card"><div class="p-role">Erkek Kardeşi</div><div id="p-erkekKardes">-</div></div>
+                <div class="p-card"><div class="p-role">Kız Kardeşi</div><div id="p-kizKardes">-</div></div>
+            </div>
+
+            <h3 class="section-title" style="font-size:14px; margin-top:40px; border-top: 1px solid var(--border-color); padding-top:20px;">🕊️ Taziye Defteri (Yorumlar)</h3>
+            <div id="p-commentsList" style="margin-bottom:20px;"></div>
+            
+            <div style="background:#fafafa; padding:15px; border:1px dashed var(--accent-color); border-radius:10px;">
+                <h4 style="font-size:12px; margin-bottom:8px; color:var(--primary-text);">Bir Taziye Mesajı / Yorum Bırakın</h4>
+                <input type="text" id="c-author" placeholder="Adınız Soyadınız" style="background:#fff;">
+                <textarea id="c-text" placeholder="Taziye mesajınız..." rows="2" style="background:#fff; margin-bottom:8px;"></textarea>
+                <button class="btn-primary" style="padding:8px; font-size:13px;" onclick="yorumGonder()">Mesajı Gönder</button>
+                <p style="font-size:10px; color:var(--secondary-text); text-align:center; margin-top:5px;">Not: Mesajlar yönetici onayından sonra yayınlanır.</p>
             </div>
         </div>
+    </section>
 
-        <!-- AYNI KUŞAK (Kardeşler) -->
-        <div class="generation-block">
-            <div class="generation-label">Kardeşleri</div>
-            <div class="flex-list">
-                <div class="person-card">
-                    <div class="role">Kız Kardeşi</div>
-                    <div class="name">Emine (Yılmaz) Kaya</div>
-                    <div class="lifespan">1948 — Aktif</div>
-                </div>
-                <div class="person-card">
-                    <div class="role">Erkek Kardeşi</div>
-                    <div class="name">Mustafa Yılmaz</div>
-                    <div class="lifespan">1952 — 2018</div>
-                </div>
-            </div>
+    <section id="view-admin" class="view-section">
+        <div id="adminLoginForm" class="card">
+            <h2 class="section-title">Yönetici Girişi</h2>
+            <input type="email" id="adminEmail" placeholder="Yönetici E-posta">
+            <input type="password" id="adminPassword" placeholder="Şifre">
+            <button class="btn-primary" onclick="loginAdmin()">Giriş Yap</button>
         </div>
 
-    </div>
+        <div id="adminDashboard" style="display:none;">
+            <div class="admin-badge">Sistem Yöneticisi Paneli Aktif</div>
+            
+            <div style="background:#fff; padding:15px; border-radius:10px; margin-bottom:25px; border:1px solid #ffcccb;">
+                <h3 style="margin-bottom:12px; font-size:14px; color:#c0392b; font-family:'Cinzel';">⏳ Onay Bekleyen Cenaze Başvuruları</h3>
+                <div id="pendingList" style="margin-bottom:25px;"></div>
 
-    <div class="footer">
-        RUHUNA EL-FATİHA
-    </div>
-</div>
+                <h3 style="margin-bottom:12px; font-size:14px; color:#c0392b; font-family:'Cinzel'; border-top:1px dashed #ffcccb; padding-top:15px;">💬 Onay Bekleyen Taziye Mesajları</h3>
+                <div id="pendingCommentsList"></div>
+            </div>
 
+            <div style="background:#fff; padding:15px; border-radius:10px; border:1px solid #d4efdf;">
+                <h3 style="margin-bottom:15px; font-size:14px; color:#27ae60; font-family:'Cinzel'; border-bottom:2px solid #27ae60; padding-bottom:5px;">✅ Yayındaki Aktif Cenazeler & Mesajları</h3>
+                <div id="approvedMasterContainer"></div>
+            </div>
+        </div>
+    </section>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDiyJmx4Klh68PZylRtpU9B8cTHBQQoLJo",
+        authDomain: "mezaranitsistemi.firebaseapp.com",
+        projectId: "mezaranitsistemi",
+        storageBucket: "mezaranitsistemi.firebasestorage.app",
+        messagingSenderId: "585262433432",
+        appId: "1:585262433432:web:6005793eb6b1464af6fced",
+        measurementId: "G-ZP4DJ12GWE"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let allData = [];
+    let currentProfileId = null;
+    let base64PhotoData = ""; // Dönüştürülen resmi tutacak küresel değişken
+
+    // Varsayılan Avatar SVG (Fotoğraf yüklenmezse kullanılacak)
+    const defaultAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a0aec0'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z'/></svg>";
+
+    window.onload = function() {
+        if (localStorage.getItem("legalAccepted") === "true") {
+            document.getElementById("welcomeOverlay").style.display = "none";
+        }
+        loadHomeData();
+    };
+
+    // Görseli Base64'e çeviren fonksiyon
+    function previewAndProcessImage(input) {
+        const file = input.files[0];
+        const previewText = document.getElementById("filePreviewInfo");
+        
+        if (file) {
+            // Büyük boyutlu fotoğraflarda hata yaşamamak için kontrol (Örn: Max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Yüklemek istediğiniz fotoğraf çok büyük. Lütfen 2MB'tan daha küçük bir görsel seçin.");
+                input.value = "";
+                base64PhotoData = "";
+                previewText.style.display = "none";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                base64PhotoData = e.target.result; // Base64 verisi hazır
+                previewText.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        } else {
+            base64PhotoData = "";
+            previewText.style.display = "none";
+        }
+    }
+
+    function toggleEnterButton() {
+        const checkbox = document.getElementById("legalCheck");
+        const btn = document.getElementById("enterSystemBtn");
+        if(checkbox.checked) {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = "0.4";
+        }
+    }
+
+    function acceptTerms() {
+        localStorage.setItem("legalAccepted", "true");
+        document.getElementById("welcomeOverlay").style.display = "none";
+    }
+
+    function navigate(viewId) {
+        document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById('view-' + viewId).classList.add('active');
+        toggleMenu(false);
+        window.scrollTo(0,0);
+        if(viewId === 'home') loadHomeData();
+    }
+
+    function toggleMenu(open) {
+        document.getElementById('sidebar').classList.toggle('active', open);
+        document.getElementById('overlay').classList.toggle('active', open);
+    }
+
+    function loadHomeData() {
+        db.collection("deceased").where("status", "==", "approved").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+            allData = [];
+            const container = document.getElementById("homeList");
+            container.innerHTML = "";
+            
+            if(snapshot.empty) {
+                container.innerHTML = "<p style='text-align:center; font-size:13px; color:var(--secondary-text); padding:20px;'>Henüz onaylanmış vefat kaydı bulunmamaktadır.</p>";
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                data.id = doc.id;
+                allData.push(data);
+
+                container.innerHTML += `
+                    <div class="deceased-item" onclick="openProfile('${data.id}')">
+                        <div>
+                            <div class="deceased-name">${data.name}</div>
+                            <div class="deceased-date">${data.dates}</div>
+                        </div>
+                        <div style="font-size:13px; color:var(--accent-color); font-weight:600;">🌸 ${data.prayersCount || 0}</div>
+                    </div>
+                `;
+            });
+        });
+    }
+
+    function aramaYap() {
+        const query = document.getElementById("searchInput").value.toLowerCase().trim();
+        const resultContainer = document.getElementById("searchResultList");
+        resultContainer.innerHTML = "";
+
+        const filtered = allData.filter(item => item.name.toLowerCase().includes(query));
+        
+        if(filtered.length === 0) {
+            resultContainer.innerHTML = "<p style='text-align:center; font-size:13px; color:var(--secondary-text); padding:15px;'>Eşleşen kayıt bulunamadı.</p>";
+            return;
+        }
+
+        filtered.forEach(data => {
+            resultContainer.innerHTML += `
+                <div class="deceased-item" onclick="openProfile('${data.id}')">
+                    <div>
+                        <div class="deceased-name">${data.name}</div>
+                        <div class="deceased-date">${data.dates}</div>
+                    </div>
+                    <div style="font-size:13px; color:var(--accent-color); font-weight:600;">🌸 ${data.prayersCount || 0}</div>
+                </div>
+            `;
+        });
+    }
+
+    function openProfile(id) {
+        const item = allData.find(x => x.id === id);
+        if(!item) return;
+        currentProfileId = id;
+
+        document.getElementById("p-name").innerText = item.name;
+        document.getElementById("p-dates").innerText = item.dates;
+        document.getElementById("p-epitaph").innerText = item.epitaph || '"Ruhuna El-Fâtiha"';
+        document.getElementById("p-prayerCount").innerText = item.prayersCount || 0;
+        
+        // Fotoğraf Ataması (Base64 kodunu veya varsayılan resmi yükler)
+        document.getElementById("p-photo").src = item.photo || defaultAvatar;
+
+        // Nasıl Bir İnsandı Kontrolü
+        if(item.bio && item.bio.trim() !== "") {
+            document.getElementById("p-bioBox").style.display = "block";
+            document.getElementById("p-bio").innerText = item.bio;
+        } else {
+            document.getElementById("p-bioBox").style.display = "none";
+        }
+
+        document.getElementById("p-baba").innerText = item.baba || "-";
+        document.getElementById("p-anne").innerText = item.anne || "-";
+        document.getElementById("p-dede").innerText = item.dede || "-";
+        document.getElementById("p-babaanne").innerText = item.babaanne || "-";
+        document.getElementById("p-buyukbaba").innerText = item.buyukbaba || "-";
+        document.getElementById("p-anneanne").innerText = item.anneanne || "-";
+        document.getElementById("p-erkekKardes").innerText = item.erkekKardes || "-";
+        document.getElementById("p-kizKardes").innerText = item.kizKardes || "-";
+
+        const bugün = new Date().toLocaleDateString('tr-TR');
+        if(localStorage.getItem('dua_' + id) === bugün) {
+            document.getElementById("p-prayerBtn").disabled = true;
+            document.getElementById("p-prayerBtn").innerText = "Bugün Dua Okudunuz 🙏";
+        } else {
+            document.getElementById("p-prayerBtn").disabled = false;
+            document.getElementById("p-prayerBtn").innerText = "🌸 Bir Dua Okudum";
+        }
+
+        db.collection("comments").where("deceasedId", "==", id).where("status", "==", "approved").onSnapshot(snap => {
+            const cList = document.getElementById("p-commentsList");
+            cList.innerHTML = snap.empty ? "<p style='font-size:12px;color:gray;text-align:center;'>Henüz taziye mesajı yazılmamış.</p>" : "";
+            
+            let commentsArr = [];
+            snap.forEach(doc => commentsArr.push(doc.data()));
+            commentsArr.sort((a,b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+
+            commentsArr.forEach(c => {
+                cList.innerHTML += `
+                    <div class="comment-item">
+                        <div class="comment-author">${c.author}</div>
+                        <div>${c.text}</div>
+                    </div>
+                `;
+            });
+        });
+
+        navigate('profile');
+    }
+
+    async function duaEt() {
+        if(!currentProfileId) return;
+        const bugün = new Date().toLocaleDateString('tr-TR');
+        
+        try {
+            const docRef = db.collection("deceased").doc(currentProfileId);
+            await db.runTransaction(async (transaction) => {
+                const sfDoc = await transaction.get(docRef);
+                const yeniSayi = (sfDoc.data().prayersCount || 0) + 1;
+                transaction.update(docRef, { prayersCount: yeniSayi });
+                document.getElementById("p-prayerCount").innerText = yeniSayi;
+            });
+
+            localStorage.setItem('dua_' + currentProfileId, bugün);
+            document.getElementById("p-prayerBtn").disabled = true;
+            document.getElementById("p-prayerBtn").innerText = "Bugün Dua Okudunuz 🙏";
+        } catch(e) {
+            alert("Bağlantı hatası oluştu.");
+        }
+    }
+
+    document.getElementById("submissionForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+            await db.collection("deceased").add({
+                name: document.getElementById("f-name").value,
+                dates: document.getElementById("f-dates").value,
+                photo: base64PhotoData || "", // Base64 formatındaki görsel veritabanına gidiyor
+                epitaph: document.getElementById("f-epitaph").value,
+                bio: document.getElementById("f-bio").value || "",
+                baba: document.getElementById("f-baba").value,
+                anne: document.getElementById("f-anne").value,
+                dede: document.getElementById("f-dede").value,
+                babaanne: document.getElementById("f-babaanne").value,
+                buyukbaba: document.getElementById("f-buyukbaba").value,
+                anneanne: document.getElementById("f-anneanne").value,
+                erkekKardes: document.getElementById("f-erkekKardes").value,
+                kizKardes: document.getElementById("f-kizKardes").value,
+                prayersCount: 0,
+                status: "pending",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            document.getElementById("submissionForm").reset();
+            base64PhotoData = ""; // Sıfırlama
+            document.getElementById("filePreviewInfo").style.display = "none";
+            
+            alert("Başvuru başarıyla iletildi. Yönetici onayından sonra sistemde yayınlanacaktır.");
+            navigate('home');
+        } catch(err) {
+            alert("Hata: " + err.message);
+        }
+    });
+
+    async function yorumGonder() {
+        const author = document.getElementById("c-author").value.trim();
+        const text = document.getElementById("c-text").value.trim();
+        if(!author || !text) { alert("Lütfen adınızı ve mesajınızı doldurun."); return; }
+        
+        try {
+            await db.collection("comments").add({
+                deceasedId: currentProfileId,
+                author: author,
+                text: text,
+                status: "pending",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById("c-author").value = "";
+            document.getElementById("c-text").value = "";
+            alert("Taziye mesajınız alındı, yönetici onayından sonra yayınlanacaktır.");
+        } catch(e) {
+            alert("Yorum gönderilirken hata oluştu.");
+        }
+    }
+
+    async function loginAdmin() {
+        const email = document.getElementById("adminEmail").value;
+        const pass = document.getElementById("adminPassword").value;
+        try {
+            await auth.signInWithEmailAndPassword(email, pass);
+        } catch(err) {
+            alert("Hatalı yönetici bilgileri!");
+        }
+    }
+
+    auth.onAuthStateChanged((user) => {
+        if(user) {
+            document.getElementById("adminLoginForm").style.display = "none";
+            document.getElementById("adminDashboard").style.display = "block";
+            loadAdminPanelData();
+        } else {
+            document.getElementById("adminLoginForm").style.display = "block";
+            document.getElementById("adminDashboard").style.display = "none";
+        }
+    });
+
+    function loadAdminPanelData() {
+        db.collection("deceased").where("status", "==", "pending").onSnapshot(snap => {
+            const pList = document.getElementById("pendingList");
+            pList.innerHTML = snap.empty ? "<p style='font-size:12px;color:gray;padding:5px;'>Bekleyen başvuru bulunmuyor.</p>" : "";
+            snap.forEach(doc => {
+                const data = doc.data();
+                pList.innerHTML += `
+                    <div class="card" style="padding:15px; margin-bottom:10px; background:#fffdf9; font-size:13px;">
+                        <strong>${data.name}</strong> (${data.dates})
+                        <div class="admin-actions">
+                            <button class="btn-approve" onclick="actionApprove('${doc.id}')">✅ Onayla</button>
+                            <button class="btn-delete" onclick="actionDelete('${doc.id}')">❌ Sil</button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        db.collection("comments").where("status", "==", "pending").onSnapshot(snap => {
+            const pcList = document.getElementById("pendingCommentsList");
+            pcList.innerHTML = snap.empty ? "<p style='font-size:12px;color:gray;padding:5px;'>Bekleyen yorum bulunmuyor.</p>" : "";
+            snap.forEach(doc => {
+                const data = doc.data();
+                const vefatEden = allData.find(x => x.id === data.deceasedId);
+                const kime = vefatEden ? vefatEden.name : "Bilinmeyen Mevta";
+
+                pcList.innerHTML += `
+                    <div class="card" style="padding:12px; margin-bottom:10px; background:#fafafa; font-size:12px;">
+                        Kime: <strong>${kime}</strong> | Yazan: <strong>${data.author}</strong>
+                        <p style="font-style:italic; margin:4px 0;">"${data.text}"</p>
+                        <div class="admin-actions">
+                            <button class="btn-approve" onclick="actionApproveComment('${doc.id}')">Onayla</button>
+                            <button class="btn-delete" onclick="actionDeleteComment('${doc.id}')">Sil</button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        db.collection("deceased").where("status", "==", "approved").orderBy("timestamp", "desc").onSnapshot(snapDeceased => {
+            db.collection("comments").where("status", "==", "approved").onSnapshot(snapComments => {
+                
+                const masterContainer = document.getElementById("approvedMasterContainer");
+                masterContainer.innerHTML = snapDeceased.empty ? "<p style='font-size:12px;color:gray;'>Yayında kayıtlı cenaze bulunmuyor.</p>" : "";
+                
+                let commentsGrouped = {};
+                snapComments.forEach(cDoc => {
+                    const cData = cDoc.data();
+                    cData.commentId = cDoc.id;
+                    if(!commentsGrouped[cData.deceasedId]) {
+                        commentsGrouped[cData.deceasedId] = [];
+                    }
+                    commentsGrouped[cData.deceasedId].push(cData);
+                });
+
+                snapDeceased.forEach(dDoc => {
+                    const dData = dDoc.data();
+                    const dId = dDoc.id;
+                    const oMevtayaAitYorumlar = commentsGrouped[dId] || [];
+
+                    let yorumlarHtml = "";
+                    if(oMevtayaAitYorumlar.length === 0) {
+                        yorumlarHtml = `<div style="font-size:11px; color:#aaa; margin-top:5px;">Bu cenazeye ait onaylı yorum bulunmuyor.</div>`;
+                    } else {
+                        oMevtayaAitYorumlar.forEach(c => {
+                            yorumlarHtml += `
+                                <div class="admin-sub-comment">
+                                    <div><strong>${c.author}:</strong> "${c.text}"</div>
+                                    <button class="btn-delete" style="padding:2px 6px; font-size:10px; margin:0;" onclick="actionDeleteComment('${c.commentId}')">🗑️ Yorumu Kaldır</button>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    masterContainer.innerHTML += `
+                        <div class="card" style="padding:15px; margin-bottom:12px; border:1px solid #e2e8f0; background:#fff;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #eee; padding-bottom:8px;">
+                                <div>
+                                    <strong style="font-size:14px; color:var(--primary-text);">${dData.name}</strong> 
+                                    <span style="font-size:12px; color:var(--secondary-text);">(${dData.dates})</span>
+                                </div>
+                                <button class="btn-delete" style="padding:4px 8px; font-size:11px;" onclick="actionDelete('${dId}')">🗑️ Cenazeyi Sil</button>
+                            </div>
+                            <div style="margin-top:10px;">
+                                <div style="font-size:11px; font-weight:600; color:var(--accent-color); text-transform:uppercase;">💬 Bu Cenazeye Ait Yayındaki Mesajlar:</div>
+                                ${yorumlarHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        });
+    }
+
+    async function actionApprove(id) {
+        if(confirm("Bu kaydı onaylıyor musunuz?")) {
+            await db.collection("deceased").doc(id).update({ status: "approved" });
+        }
+    }
+
+    async function actionDelete(id) {
+        if(confirm("Bu cenaze kaydını (ve dolayısıyla anıt sayfasını) sistemden KALICI olarak silmek istiyor musunuz?")) {
+            await db.collection("deceased").doc(id).delete();
+        }
+    }
+
+    async function actionApproveComment(id) {
+        await db.collection("comments").doc(id).update({ status: "approved" });
+    }
+
+    async function actionDeleteComment(id) {
+        if(confirm("Bu yorumu sistemden tamamen silmek istediğinize emin misiniz?")) {
+            await db.collection("comments").doc(id).delete();
+        }
+    }
+</script>
 </body>
 </html>
